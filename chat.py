@@ -61,7 +61,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from langgraph.checkpoint.memory import InMemorySaver
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 
 from CLI.cli import build_agent, _extract_text, _fmt_args
 from configuration.langchain_system_prompt import SYSTEM_PROMPT
@@ -108,12 +108,30 @@ while True:
     # If the user's message matches a known shape (e.g.,
     # "TGV from Paris to Bordeaux on 2026-05-20"), skip the LLM and
     # call the MCP tools directly. ~5-10s instead of ~30-50s.
+    #
+    # IMPORTANT: we also inject the question and the skill's reply into
+    # the agent's checkpointed message history so the LLM has continuity
+    # on follow-ups like "of those, which is fastest?". Without this,
+    # the skill turn is invisible to the agent and the next turn loses
+    # context.
     import time as _time
     _t0 = _time.time()
     skill_result = skills.handle(user_input)
     if skill_result is not None:
         print(skill_result)
         print(f"\n[skill answered in {_time.time() - _t0:.1f}s — no LLM used]")
+        try:
+            agent.update_state(
+                config,
+                {"messages": [
+                    HumanMessage(content=user_input),
+                    AIMessage(content=skill_result),
+                ]},
+            )
+        except Exception as exc:
+            # Don't fail the turn if state update fails — the user
+            # still got their answer, only follow-up context is lost.
+            print(f"[warn: couldn't persist skill turn to history: {exc}]")
         continue
 
     try:
