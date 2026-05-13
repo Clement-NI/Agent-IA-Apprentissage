@@ -110,14 +110,27 @@ def _build_cached_agent(provider: str, model: str):
 with st.sidebar:
     st.header("⚙ Settings")
 
+    # Detect whether we're on Streamlit Cloud (it mounts the repo at
+    # /mount/src/...). Default to Anthropic in that case because Ollama
+    # needs a local daemon at localhost:11434 that the Cloud sandbox
+    # doesn't have.
+    _on_cloud = os.path.exists("/mount/src")
+    _default_provider_idx = 0 if _on_cloud else 1   # anthropic vs ollama
+
     provider = st.selectbox(
         "Provider",
         options=["anthropic", "ollama", "gemini"],
-        index=1,                          # default: Ollama (free)
-        help="Anthropic = Claude (paid, most reliable). "
-             "Ollama = free cloud or local models. "
+        index=_default_provider_idx,
+        help="Anthropic = Claude (paid, works anywhere). "
+             "Ollama = free, but requires a LOCAL daemon at localhost:11434 — "
+             "won't work on Streamlit Cloud. "
              "Gemini = free quota, daily limit.",
     )
+    if _on_cloud and provider == "ollama":
+        st.warning(
+            "⚠ Ollama needs a daemon at `localhost:11434` — Streamlit Cloud "
+            "doesn't have one. Switch to **anthropic** or **gemini**."
+        )
 
     default_model = {
         "anthropic": "claude-sonnet-4-5",
@@ -147,6 +160,41 @@ with st.sidebar:
         "in ~3-5 s with no LLM call.  \n\n"
         "Ambiguous / reasoning queries fall back to the LLM."
     )
+
+    # ---- Diagnostics: what keys + tools loaded? ----
+    with st.expander("🔧 Diagnostics", expanded=False):
+        _required_keys = [
+            "ANTHROPIC_API_KEY", "GOOGLE_API_KEY",
+            "SNCF_API_TOKEN", "DUFFEL_API_KEY_LIVE", "RAPID_API_KEY",
+            "LANGSMITH_API_KEY",
+        ]
+        st.caption("**API keys** (in `os.environ`):")
+        for k in _required_keys:
+            v = os.environ.get(k, "")
+            mark = "✅" if v else "❌"
+            preview = (v[:8] + "…") if v else "*missing*"
+            st.text(f"{mark} {k}  {preview}")
+
+        st.caption(f"**MCP tools loaded** (from `MCP.Tools.TOOLS`):")
+        try:
+            tool_names = [t.name for t in TOOLS]
+            mcp_names = [n for n in tool_names if n not in {
+                "calculator", "current_time", "file_read",
+                "web_search", "web_fetch", "load_skill"}]
+            st.text(f"Total: {len(tool_names)} tools")
+            st.text(f"MCP-provided: {len(mcp_names)}")
+            for n in mcp_names:
+                st.text(f"  • {n}")
+            if not mcp_names:
+                st.error(
+                    "No MCP tools loaded. Check that the required API "
+                    "keys above are set in Streamlit Cloud's "
+                    "**Settings → Secrets**."
+                )
+        except Exception as exc:
+            st.error(f"Could not inspect TOOLS: {exc}")
+
+        st.caption(f"Running on Streamlit Cloud: **{'yes' if _on_cloud else 'no'}**")
 
 
 # ---------- session state ----------
