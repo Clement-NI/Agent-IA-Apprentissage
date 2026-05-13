@@ -6,6 +6,11 @@
 # legacy.
 
 # --- LangChain agent stack ---
+# `langchain` (the umbrella package) ships `langchain.agents.create_agent`
+# which we use in CLI/cli.py. `langchain-core` alone is NOT enough — it
+# only contains the primitive types (messages, tools, runnables), not
+# the high-level agent factory.
+langchain>=1.0.0
 langchain-anthropic>=0.3.0
 langchain-core>=0.3.0
 langchain-google-genai>=2.0.0
