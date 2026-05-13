@@ -1,0 +1,6 @@
+{
+  "graphs": {
+    "gemini": "./langchain_agent_gemini.py:agent"
+  },
+  "dependencies": ["."]
+}

@@ -1,0 +1,66 @@
+[
+  {
+    "name": "calc_basic",
+    "prompt": "What is 17 + 25? Use a tool and reply with just the number.",
+    "expect_tool": "calculator",
+    "expect_answer_regex": "42"
+  },
+  {
+    "name": "calc_compound",
+    "prompt": "Compute (123 * 456) - (789 / 3). Use a tool.",
+    "expect_tool": "calculator",
+    "expect_answer_regex": "55[,.]?825"
+  },
+  {
+    "name": "time_tokyo",
+    "prompt": "What is the current time in Tokyo? Use the time tool.",
+    "expect_tool": "current_time"
+  },
+  {
+    "name": "file_read",
+    "prompt": "Read the file 'requirements.txt' and tell me which package names appear in it.",
+    "expect_tool": "file_read",
+    "expect_answer_regex": "anthropic"
+  },
+  {
+    "name": "no_tool_needed",
+    "prompt": "Say the single word 'hello' and nothing else. Do not use any tools.",
+    "expect_no_tool": true,
+    "expect_answer_regex": "hello"
+  },
+  {
+    "name": "transport_train_simple",
+    "prompt": "TGV from Paris to Bordeaux on 2026-05-25.",
+    "expect_tool": "plan_train_journey",
+    "expect_answer_regex": "TGV|OUIGO|Intercit|RER"
+  },
+  {
+    "name": "transport_flight_simple",
+    "prompt": "Flights from Paris to Lyon on 2026-05-25.",
+    "expect_tool": "search_flights",
+    "expect_answer_regex": "CDG|EUR"
+  },
+  {
+    "name": "transport_bus_simple",
+    "prompt": "Bus from Paris to Berlin on 2026-05-25.",
+    "expect_tool": "search_trips"
+  },
+  {
+    "name": "transport_plan_all_modes",
+    "prompt": "Plan a trip from Paris to Lyon on 2026-05-25.",
+    "expect_tools_any": ["plan_train_journey", "search_flights", "search_trips"],
+    "expect_answer_regex": "(?i)(flights|trains|buses)"
+  },
+  {
+    "name": "transport_train_cross_border",
+    "prompt": "Train from Paris to Barcelona on 2026-05-25.",
+    "expect_tool": "plan_train_journey",
+    "expect_answer_regex": "TGV|Renfe|Barcelona"
+  },
+  {
+    "name": "transport_load_skill_first",
+    "prompt": "Compare TGV versus flight from Paris to Marseille on 2026-05-25, which is faster?",
+    "expect_tools_any": ["load_skill", "plan_train_journey", "search_flights"],
+    "expect_answer_regex": "(?i)(TGV|train|flight)"
+  }
+]
