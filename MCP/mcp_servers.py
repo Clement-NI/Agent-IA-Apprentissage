@@ -124,8 +124,13 @@ def _enabled_servers() -> Dict[str, Dict[str, Any]]:
     if sncf_path and sncf_key:
         sncf_script = Path(sncf_path) / "sncf_server.py"
         if sncf_script.is_file():
+            # Use `sys.executable` (the venv Python with mcp/httpx
+            # installed) rather than `_python_cmd()` which falls back to
+            # the SYSTEM python3 on Linux PaaS — that one lacks our
+            # requirements.txt packages and the subprocess crashes
+            # silently at import time with `ModuleNotFoundError: mcp`.
             servers["sncf"] = {
-                "command": _python_cmd(),
+                "command": sys.executable,
                 "args": [str(sncf_script)],
                 "cwd": str(sncf_path),
                 "env": {**os.environ.copy(), "SNCF_API_TOKEN": sncf_key},
